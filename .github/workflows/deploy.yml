@@ -32,6 +32,6 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -var-file="env/${{ github.event.inputs.environment }}.tfvars"
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve -var-file="env/${{ github.event.inputs.environment }}.tfvars"
+    #   - name: Terraform Apply
+    #     if: github.ref == 'refs/heads/main'
+    #     run: terraform apply -auto-approve -var-file="env/${{ github.event.inputs.environment }}.tfvars"
