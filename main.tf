@@ -1,5 +1,5 @@
 module "vpc" {
-  source           = "modules/vpc"
+  source           = "./modules/vpc"
   environment      = var.environment
   vpc_cidr         = var.vpc_cidr
   web_subnet_cidrs = var.web_subnet_cidrs
@@ -7,7 +7,7 @@ module "vpc" {
 }
 
 module "web_tier" {
-  source                = "modules/web_tier"
+  source                = "./modules/web_tier"
   vpc_id                = module.vpc.vpc_id
   public_subnet_ids     = module.vpc.public_subnet_ids
   instance_type         = var.web_instance_type
@@ -19,7 +19,7 @@ module "web_tier" {
 }
 
 module "db_tier" {
-  source              = "modules/db_tier"
+  source              = "./modules/db_tier"
   vpc_id              = module.vpc.vpc_id
   private_subnet_ids  = module.vpc.private_db_subnet_ids
   db_instance_class   = var.db_instance_class
