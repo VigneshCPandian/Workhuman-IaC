@@ -3,7 +3,7 @@ resource "aws_vpc" "workhuman_vpc" {
   enable_dns_hostnames = true
   enable_dns_support = true
 
-  tags {
+  tags = {
     Name = "workhuman"
   }
 }
@@ -14,7 +14,7 @@ resource "aws_subnet" "public_subnet" {
   map_public_ip_on_launch = true
   availability_zone = "us-east-1"
 
-  tags {
+  tags = {
     Name = "workhuman-subnet"
   }
 }
