@@ -15,3 +15,7 @@ resource "aws_db_instance" "db_instance" {
   vpc_security_group_ids = [var.db_sg_id]
   storage_encrypted    = true
 }
+
+resource "aws_security_group" "db_sg" {
+  vpc_id = var.vpc_id
+}
