@@ -21,3 +21,7 @@ variable "iam_instance_profile" {
 variable "security_groups" {
   
 }
+variable "vpc_id" {
+  description = "ID of the VPC"
+  type        = string
+}
