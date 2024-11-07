@@ -16,6 +16,7 @@ module "web_tier" {
   min_size              = var.web_min_size
   iam_instance_profile  = aws_iam_instance_profile.ec2_instance_profile.name
   web_sg_id             = module.vpc.web_sg_id
+  security_groups       = aws_security_group.web_sg.id
 }
 
 module "db_tier" {
