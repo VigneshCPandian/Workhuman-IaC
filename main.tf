@@ -1,30 +1,49 @@
+# VPC module
 module "vpc" {
-  source           = "./modules/vpc"
-  environment      = var.environment
-  vpc_cidr         = var.vpc_cidr
-  web_subnet_cidrs = var.web_subnet_cidrs
-  db_subnet_cidrs  = var.db_subnet_cidrs
+  source = "./modules/vpc"
+  vpc_cidr = "10.0.0.0/16"
 }
 
-module "web_tier" {
-  source                = "./modules/web_tier"
-  vpc_id                = module.vpc.vpc_id
-  public_subnet_ids     = module.vpc.public_subnet_ids
-  instance_type         = var.web_instance_type
-  desired_capacity      = var.web_desired_capacity
-  max_size              = var.web_max_size
-  min_size              = var.web_min_size
-  iam_instance_profile  = aws_iam_instance_profile.ec2_instance_profile.name
-  web_sg_id             = module.vpc.web_sg_id
-  security_groups       = aws_security_group.web_sg.id
+# Security Group module
+module "security_group" {
+  source = "./modules/security_group"
+  vpc_id = module.vpc.vpc_id
 }
 
-module "db_tier" {
-  source              = "./modules/db_tier"
+# Load Balancer module
+module "load_balancer" {
+  source        = "./modules/load_balancer"
+  vpc_id        = module.vpc.vpc_id
+  subnets       = module.vpc.public_subnet_ids
+  security_group_id = module.security_group.sg_id
+}
+
+# Autoscaling Group module
+module "autoscaling" {
+  source                 = "./modules/autoscaling"
+  subnets                = module.vpc.public_subnet_ids
+  security_group_id      = module.security_group.sg_id
+  load_balancer_target_group_arn = module.load_balancer.target_group_arn
+  instance_type          = "t2.micro"
+  key_name               = "my-key"
+}
+
+# Database Module
+module "db" {
+  source              = "./modules/db"
   vpc_id              = module.vpc.vpc_id
-  private_subnet_ids  = module.vpc.private_db_subnet_ids
-  db_instance_class   = var.db_instance_class
-  db_username         = var.db_username
+  subnets             = module.vpc.private_subnet_ids
+  db_identifier       = "enterprise-db"
+  db_name             = "enterprise_db"
+  db_username         = "admin"
   db_password         = var.db_password
-  db_sg_id            = module.vpc.db_sg_id
+  security_group_id   = module.security_group.db_sg_id
+}
+
+output "load_balancer_dns_name" {
+  value = module.load_balancer.load_balancer_dns_name
+}
+
+output "db_endpoint" {
+  value = module.db.db_endpoint
 }

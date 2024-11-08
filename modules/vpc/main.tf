@@ -1,42 +1,71 @@
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+resource "aws_vpc" "main_vpc" {
+  cidr_block = var.vpc_cidr
+  tags = {
+    Name = "main_vpc"
+  }
 }
 
-resource "aws_subnet" "public" {
-  count                   = length(var.web_subnet_cidrs)
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.web_subnet_cidrs[count.index]
+resource "aws_subnet" "public_subnet_az1" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "us-west-2a"
   map_public_ip_on_launch = true
+  tags = {
+    Name = "public_subnet_az1"
+  }
 }
 
-resource "aws_subnet" "private_db" {
-  count      = length(var.db_subnet_cidrs)
-  vpc_id     = aws_vpc.main.id
-  cidr_block = var.db_subnet_cidrs[count.index]
+resource "aws_subnet" "public_subnet_az2" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "us-west-2b"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "public_subnet_az2"
+  }
 }
+
+# Private subnets for the DB tier
+resource "aws_subnet" "private_subnet_az1" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = "10.0.3.0/24"
+  availability_zone = "us-west-2a"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "private_subnet_az1"
+  }
+}
+
+resource "aws_subnet" "private_subnet_az2" {
+  vpc_id            = aws_vpc.main_vpc.id
+  cidr_block        = "10.0.4.0/24"
+  availability_zone = "us-west-2b"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "private_subnet_az2"
+  }
+}
+
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.main_vpc.id
 }
 
-resource "aws_security_group" "web_sg" {
-  vpc_id = aws_vpc.main.id
-    ingress {
-        from_port = 80
-        to_port = 80
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
 }
 
-resource "aws_security_group" "db_sg" {
-  vpc_id = aws_vpc.main.id
-    ingress {
-        from_port = 3306
-        to_port = 3306
-        protocol = "tcp"
-        security_groups = [aws_security_group.web_sg.id]
-    }
+resource "aws_route_table_association" "public_subnet_assoc_az1" {
+  subnet_id      = aws_subnet.public_subnet_az1.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "public_subnet_assoc_az2" {
+  subnet_id      = aws_subnet.public_subnet_az2.id
+  route_table_id = aws_route_table.public_rt.id
 }
