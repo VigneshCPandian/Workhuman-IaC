@@ -3,7 +3,7 @@ terraform {
     bucket = "workhuman-iac-tf-state-bucket"
     key    = "project/dev/terraform.tfstate"
     region = "us-east-1"
-    dynamodb_table = "remote-backend"
+    dynamodb_table = "terraform-state-lock"
     encrypt = true
   }
 }
