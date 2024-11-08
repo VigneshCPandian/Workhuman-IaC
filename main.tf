@@ -1,49 +1,67 @@
-# VPC module
 module "vpc" {
-  source = "./modules/vpc"
-  vpc_cidr = "10.0.0.0/16"
+    source = "./modules/vpc"
+    region = var.region
+    project_name = var.project_name
+    vpc_cidr         = var.vpc_cidr
+    pub_sub_1a_cidr = var.pub_sub_1a_cidr
+    pub_sub_2b_cidr = var.pub_sub_2b_cidr
+    pri_sub_3a_cidr = var.pri_sub_3a_cidr
+    pri_sub_4b_cidr = var.pri_sub_4b_cidr
+    pri_sub_5a_cidr = var.pri_sub_5a_cidr
+    pri_sub_6b_cidr = var.pri_sub_6b_cidr
 }
 
-# Security Group module
-module "security_group" {
-  source = "./modules/security_group"
+module "nat" {
+  source = "./modules/nat"
+
+  pub_sub_1a_id = module.vpc.pub_sub_1a_id
+  igw_id        = module.vpc.igw_id
+  pub_sub_2b_id = module.vpc.pub_sub_2b_id
+  vpc_id        = module.vpc.vpc_id
+  pri_sub_3a_id = module.vpc.pri_sub_3a_id
+  pri_sub_4b_id = module.vpc.pri_sub_4b_id
+  pri_sub_5a_id = module.vpc.pri_sub_5a_id
+  pri_sub_6b_id = module.vpc.pri_sub_6b_id
+}
+
+module "security-group" {
+  source = "./modules/security-group"
   vpc_id = module.vpc.vpc_id
 }
 
-# Load Balancer module
-module "load_balancer" {
-  source        = "./modules/load_balancer"
-  vpc_id        = module.vpc.vpc_id
-  subnets       = module.vpc.public_subnet_ids
-  security_group_id = module.security_group.sg_id
+# creating Key for instances
+module "key" {
+  source = "./modules/key"
 }
 
-# Autoscaling Group module
-module "autoscaling" {
-  source                 = "./modules/autoscaling"
-  subnets                = module.vpc.public_subnet_ids
-  security_group_id      = module.security_group.sg_id
-  load_balancer_target_group_arn = module.load_balancer.target_group_arn
-  instance_type          = "t2.micro"
-  key_name               = "my-key"
+# Creating Application Load balancer
+module "alb" {
+  source         = "./modules/alb"
+  project_name   = module.vpc.project_name
+  alb_sg_id      = module.security-group.alb_sg_id
+  pub_sub_1a_id = module.vpc.pub_sub_1a_id
+  pub_sub_2b_id = module.vpc.pub_sub_2b_id
+  vpc_id         = module.vpc.vpc_id
 }
 
-# Database Module
-module "db" {
-  source              = "./modules/db"
-  vpc_id              = module.vpc.vpc_id
-  subnets             = module.vpc.private_subnet_ids
-  db_identifier       = "enterprise-db"
-  db_name             = "enterprise_db"
-  db_username         = "admin"
-  db_password         = var.db_password
-  security_group_id   = module.security_group.db_sg_id
+module "asg" {
+  source         = "./modules/asg"
+  project_name   = module.vpc.project_name
+  key_name       = module.key.key_name
+  client_sg_id   = module.security-group.client_sg_id
+  pri_sub_3a_id = module.vpc.pri_sub_3a_id
+  pri_sub_4b_id = module.vpc.pri_sub_4b_id
+  tg_arn         = module.alb.tg_arn
+
 }
 
-output "load_balancer_dns_name" {
-  value = module.load_balancer.load_balancer_dns_name
-}
+# creating RDS instance
 
-output "db_endpoint" {
-  value = module.db.db_endpoint
+module "rds" {
+  source         = "./modules/rds"
+  db_sg_id       = module.security-group.db_sg_id
+  pri_sub_5a_id = module.vpc.pri_sub_5a_id
+  pri_sub_6b_id = module.vpc.pri_sub_6b_id
+  db_username    = var.db_username
+  db_password    = var.db_password
 }

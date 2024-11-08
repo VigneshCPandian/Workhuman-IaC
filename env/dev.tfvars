@@ -1,8 +1,0 @@
-aws_region   = "us-west-2"
-vpc_cidr     = "10.1.0.0/16"
-instance_type = "t2.micro"
-key_name      = "dev-key"
-db_name       = "dev_db"
-db_username   = "dev_admin"
-db_password   = "dev_password"
-env           = "dev"
