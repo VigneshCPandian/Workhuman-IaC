@@ -46,8 +46,6 @@ resource "aws_subnet" "pub_sub_2b" {
   }
 }
 
-
-
 # create route table and add public route
 resource "aws_route_table" "public_route_table" {
   vpc_id       = aws_vpc.vpc.id

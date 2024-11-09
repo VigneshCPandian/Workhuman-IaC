@@ -24,6 +24,7 @@ module "nat" {
   pri_sub_6b_id = module.vpc.pri_sub_6b_id
 }
 
+
 module "security-group" {
   source = "./modules/security-group"
   vpc_id = module.vpc.vpc_id
